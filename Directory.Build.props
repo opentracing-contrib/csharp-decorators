@@ -1,6 +1,6 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
-    <Authors>Benjamin Krämer</Authors>
+    <Version>0.0.0</Version>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/15482765</PackageIconUrl>
     <PackageProjectUrl>https://github.com/opentracing-contrib/csharp-decorators</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/opentracing-contrib/csharp-decorators/master/LICENSE</PackageLicenseUrl>
