@@ -16,8 +16,6 @@ Using NuGet Package Manager Console:
 In order to decorate some behavior to an existing ITracer implementation, you'll have to encapsulate this one in an other ITracer implementation of your own. This project provide some simple way to do that by using a `TracerDecoratorBuilder` and then define some decorators `ITracer, IScopeManager, ISpan, ISpanBuilder, ISpanContext or IScope`.
 
 
-### Subscribe multiple handlers
-
 ```csharp
 using OpenTracing.Contrib.Decorators;
 ```
