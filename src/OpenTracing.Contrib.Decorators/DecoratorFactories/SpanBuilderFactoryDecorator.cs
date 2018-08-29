@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTracing.Tag;
 
-namespace OpenTracing.Contrib.Decorators
+namespace OpenTracing.Contrib.Decorators.DecoratorFactories
 {
     sealed class SpanBuilderFactoryDecorator : ISpanBuilder
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace OpenTracing.Contrib.Decorators
+namespace OpenTracing.Contrib.Decorators.DecoratorFactories
 {
 #pragma warning disable S3881 // "IDisposable" should be implemented correctly => the decorator does not have own resources to dispose
     sealed class ScopeFactoryDecorator : IScope

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using OpenTracing.Contrib.Decorators.DecoratorFactories;
 
 namespace OpenTracing.Contrib.Decorators
 {
