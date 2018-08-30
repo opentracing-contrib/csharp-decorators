@@ -22,15 +22,15 @@ using OpenTracing.Contrib.Decorators;
 
 Build some decorators around your existing tracer
 ```csharp
-
+// TODO
 ```
 
 Then use the tracer as expected previously
 ```csharp 
-
+// TODO
 ```
 
 Assertions
 ```csharp
-
+// TODO
 ```

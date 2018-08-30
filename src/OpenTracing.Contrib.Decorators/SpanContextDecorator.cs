@@ -12,6 +12,7 @@ namespace OpenTracing.Contrib.Decorators
         {
             _spanContext = spanContext;
         }
+
         public virtual string TraceId => _spanContext.TraceId;
 
         public virtual string SpanId => _spanContext.SpanId;
