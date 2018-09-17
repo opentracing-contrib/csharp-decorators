@@ -8,9 +8,9 @@ namespace OpenTracing.Contrib.Decorators.DecoratorFactories
     sealed class SpanFactoryDecorator : ISpan
     {
         private readonly ISpan _span;
-        private readonly SpanContextDecoratorFactory _spanContextDecoratorFactory;
+        private readonly InternalSpanContextDecoratorFactory _spanContextDecoratorFactory;
 
-        public SpanFactoryDecorator(ISpan span, SpanContextDecoratorFactory spanContextDecoratorFactory)
+        public SpanFactoryDecorator(ISpan span, InternalSpanContextDecoratorFactory spanContextDecoratorFactory)
         {
             _span = span;
             _spanContextDecoratorFactory = spanContextDecoratorFactory ?? throw new ArgumentNullException(nameof(spanContextDecoratorFactory));

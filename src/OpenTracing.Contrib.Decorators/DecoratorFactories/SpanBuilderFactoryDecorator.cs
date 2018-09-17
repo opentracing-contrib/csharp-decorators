@@ -8,14 +8,16 @@ namespace OpenTracing.Contrib.Decorators.DecoratorFactories
     sealed class SpanBuilderFactoryDecorator : ISpanBuilder
     {
         private readonly ISpanBuilder _spanBuilder;
-        private readonly SpanDecoratorFactory _spanDecoratorFactory;
-        private readonly ScopeDecoratorFactory _scopeDecoratorFactory;
+        private readonly InternalSpanDecoratorFactory _spanDecoratorFactory;
+        private readonly InternalScopeDecoratorFactory _scopeDecoratorFactory;
+        private readonly string _operationName;
 
-        public SpanBuilderFactoryDecorator(ISpanBuilder spanBuilder, SpanDecoratorFactory spanDecoratorFactory, ScopeDecoratorFactory scopeDecoratorFactory)
+        public SpanBuilderFactoryDecorator(ISpanBuilder spanBuilder, InternalSpanDecoratorFactory spanDecoratorFactory, InternalScopeDecoratorFactory scopeDecoratorFactory, string operationName)
         {
             _spanBuilder = spanBuilder;
             _spanDecoratorFactory = spanDecoratorFactory ?? throw new ArgumentNullException(nameof(spanDecoratorFactory));
             _scopeDecoratorFactory = scopeDecoratorFactory ?? throw new ArgumentNullException(nameof(scopeDecoratorFactory));
+            _operationName = operationName;
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext) { _spanBuilder.AddReference(referenceType, referencedContext); return this; }
@@ -26,11 +28,11 @@ namespace OpenTracing.Contrib.Decorators.DecoratorFactories
 
         public ISpanBuilder IgnoreActiveSpan() { _spanBuilder.IgnoreActiveSpan(); return this; }
 
-        public ISpan Start() => _spanDecoratorFactory(_spanBuilder.Start());
+        public ISpan Start() => _spanDecoratorFactory(_spanBuilder.Start(), _operationName);
 
-        public IScope StartActive() => _scopeDecoratorFactory(_spanBuilder.StartActive());
+        public IScope StartActive() => _scopeDecoratorFactory(_spanBuilder.StartActive(), _operationName);
 
-        public IScope StartActive(bool finishSpanOnDispose) => _scopeDecoratorFactory(_spanBuilder.StartActive(finishSpanOnDispose));
+        public IScope StartActive(bool finishSpanOnDispose) => _scopeDecoratorFactory(_spanBuilder.StartActive(finishSpanOnDispose), _operationName);
 
         public ISpanBuilder WithStartTimestamp(DateTimeOffset timestamp) { _spanBuilder.WithStartTimestamp(timestamp); return this; }
 

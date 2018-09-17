@@ -40,11 +40,11 @@ namespace OpenTracing.Contrib.Decorators
             var spanContextFactory = _spanContextDecoratorFactory ?? DefaultDecoratorFactories.DefaultSpanContextDecoratorFactory;
             var scopeFactory = _scopeDecoratorFactory ?? DefaultDecoratorFactories.DefaultScopeDecoratorFactory;
 
-            SpanContextDecoratorFactory spanContextDecoratorFactory = spanContextFactory;
-            SpanDecoratorFactory spanDecoratorFactory = span => new SpanFactoryDecorator(spanFactory(span), spanContextDecoratorFactory);
-            ScopeDecoratorFactory scopeDecoratorFactory = scope => new ScopeFactoryDecorator(scopeFactory(scope), spanDecoratorFactory);
-            ScopeManagerDecoratorFactory scopeManagerDecoratorFactory = scopeManager => new ScopeManagerFactoryDecorator(scopeManagerFactory(scopeManager), scopeDecoratorFactory);
-            SpanBuilderDecoratorFactory spanBuilderDecoratorFactory = spanBuilder => new SpanBuilderFactoryDecorator(spanBuilderFactory(spanBuilder), spanDecoratorFactory, scopeDecoratorFactory);
+            InternalSpanContextDecoratorFactory spanContextDecoratorFactory = spanContext => new SpanContextFactoryDecorator(spanContextFactory(spanContext));
+            InternalSpanDecoratorFactory spanDecoratorFactory = (span, operationName) => new SpanFactoryDecorator(spanFactory(span), spanContextDecoratorFactory);
+            InternalScopeDecoratorFactory scopeDecoratorFactory = (scope, operationName, finishSpanOnDispose) => new ScopeFactoryDecorator(scopeFactory(scope), spanDecoratorFactory, operationName, finishSpanOnDispose);
+            InternalScopeManagerDecoratorFactory scopeManagerDecoratorFactory = (scopeManager, operationName) => new ScopeManagerFactoryDecorator(scopeManagerFactory(scopeManager), scopeDecoratorFactory, operationName);
+            InternalSpanBuilderDecoratorFactory spanBuilderDecoratorFactory = (spanBuilder, operationName) => new SpanBuilderFactoryDecorator(spanBuilderFactory(spanBuilder), spanDecoratorFactory, scopeDecoratorFactory, operationName);
 
             return new TracerFactoryDecorator(
                 tracerFactory(_tracer),

@@ -84,7 +84,6 @@ namespace OpenTracing.Contrib.Decorators.Tests
 
             var tracer = builder.Build();
 
-
             CurrentActiveSpanCount.ShouldBe(0);
             using (tracer.BuildSpan("test").StartActive())
             {
