@@ -5,20 +5,27 @@ using OpenTracing.Propagation;
 
 namespace OpenTracing.Contrib.Decorators
 {
-    public class TracerDecorator : ITracer
+    class TracerDecorator : ITracer
     {
         private readonly ITracer _tracer;
+        private readonly DecoratorHooks _hooks;
 
-        public TracerDecorator(  ITracer tracer   )
+        public TracerDecorator(ITracer tracer, DecoratorHooks hooks)
         {
             _tracer = tracer;
+            _hooks = hooks;
+            ScopeManager = new ScopeManagerDecorator(tracer.ScopeManager, this, _hooks);
         }
 
-        public virtual IScopeManager ScopeManager => _tracer.ScopeManager;
+        public virtual IScopeManager ScopeManager { get; }
 
-        public virtual ISpan ActiveSpan => _tracer.ActiveSpan;
+        public virtual ISpan ActiveSpan => ScopeManager.Active?.Span;
 
-        public virtual ISpanBuilder BuildSpan(string operationName) => _tracer.BuildSpan(operationName);
+        public virtual ISpanBuilder BuildSpan(string operationName)
+        {
+            var spanBuilder = _tracer.BuildSpan(operationName);
+            return new SpanBuilderDecorator(spanBuilder, this, operationName, _hooks);
+        }
 
         public virtual ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier) => _tracer.Extract(format, carrier);
 

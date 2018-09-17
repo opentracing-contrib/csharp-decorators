@@ -12,46 +12,64 @@ namespace OpenTracing.Contrib.Decorators
             _tracer = tracer;
         }
 
-        private TracerDecoratorFactory _tracerDecoratorFactory;
-        public TracerDecoratorBuilder WithTracerDecorator(TracerDecoratorFactory factory) { _tracerDecoratorFactory = factory; return this; }
+        readonly List<OnSpanStarted> _onSpanStarteds = new List<OnSpanStarted>();
+        public TracerDecoratorBuilder OnSpanStarted(OnSpanStarted onSpanActivated)
+        {
+            _onSpanStarteds.Add(onSpanActivated);
+            return this;
+        }
 
-        private ScopeManagerDecoratorFactory _scopeManagerDecoratorFactory;
-        public TracerDecoratorBuilder WithScopeManagerDecorator(ScopeManagerDecoratorFactory factory) { _scopeManagerDecoratorFactory = factory; return this; }
+        readonly List<OnSpanActivated> _onSpanActivateds = new List<OnSpanActivated>();
+        public TracerDecoratorBuilder OnSpanActivated(OnSpanActivated onSpanActivated)
+        {
+            _onSpanActivateds.Add(onSpanActivated);
+            return this;
+        }
 
-        private SpanDecoratorFactory _spanDecoratorFactory;
-        public TracerDecoratorBuilder WithSpanDecorator(SpanDecoratorFactory factory) { _spanDecoratorFactory = factory; return this; }
-
-        private SpanBuilderDecoratorFactory _spanBuilderDecoratorFactory;
-        public TracerDecoratorBuilder WithSpanBuilderDecorator(SpanBuilderDecoratorFactory factory) { _spanBuilderDecoratorFactory = factory; return this; }
-
-        private SpanContextDecoratorFactory _spanContextDecoratorFactory;
-        public TracerDecoratorBuilder WithSpanContextDecorator(SpanContextDecoratorFactory factory) { _spanContextDecoratorFactory = factory; return this; }
-
-        private ScopeDecoratorFactory _scopeDecoratorFactory;
-        public TracerDecoratorBuilder WithScopeDecorator(ScopeDecoratorFactory factory) { _scopeDecoratorFactory = factory; return this; }
+        readonly List<OnSpanFinished> _onSpanFinisheds = new List<OnSpanFinished>();
+        public TracerDecoratorBuilder OnSpanFinished(OnSpanFinished onSpanFinisheds)
+        {
+            _onSpanFinisheds.Add(onSpanFinisheds);
+            return this;
+        }
 
         public ITracer Build()
         {
-            var tracerFactory = _tracerDecoratorFactory ?? DefaultDecoratorFactories.DefaultTracerDecoratorFactory;
-            var scopeManagerFactory = _scopeManagerDecoratorFactory ?? DefaultDecoratorFactories.DefaultScopeManagerDecoratorFactory;
-            var spanFactory = _spanDecoratorFactory ?? DefaultDecoratorFactories.DefaultSpanDecoratorFactory;
-            var spanBuilderFactory = _spanBuilderDecoratorFactory ?? DefaultDecoratorFactories.DefaultSpanBuilderDecoratorFactory;
-            var spanContextFactory = _spanContextDecoratorFactory ?? DefaultDecoratorFactories.DefaultSpanContextDecoratorFactory;
-            var scopeFactory = _scopeDecoratorFactory ?? DefaultDecoratorFactories.DefaultScopeDecoratorFactory;
+            var hooks = new DecoratorHooks();
 
-            SpanContextDecoratorFactory spanContextDecoratorFactory = spanContextFactory;
-            SpanDecoratorFactory spanDecoratorFactory = span => new SpanFactoryDecorator(spanFactory(span), spanContextDecoratorFactory);
-            ScopeDecoratorFactory scopeDecoratorFactory = scope => new ScopeFactoryDecorator(scopeFactory(scope), spanDecoratorFactory);
-            ScopeManagerDecoratorFactory scopeManagerDecoratorFactory = scopeManager => new ScopeManagerFactoryDecorator(scopeManagerFactory(scopeManager), scopeDecoratorFactory);
-            SpanBuilderDecoratorFactory spanBuilderDecoratorFactory = spanBuilder => new SpanBuilderFactoryDecorator(spanBuilderFactory(spanBuilder), spanDecoratorFactory, scopeDecoratorFactory);
+            if (_onSpanStarteds.Count != 0)
+            {
+                var delegates = _onSpanStarteds.ToArray();
+                hooks.OnSpanStarted = (span, operationName) =>
+                {
+                    foreach (var d in delegates)
+                        d(span, operationName);
+                };
+            }
 
-            return new TracerFactoryDecorator(
-                tracerFactory(_tracer),
-                scopeManagerDecoratorFactory,
-                spanDecoratorFactory,
-                spanBuilderDecoratorFactory,
-                spanContextDecoratorFactory
-                );
+            if (_onSpanActivateds.Count != 0)
+            {
+                var delegates = _onSpanActivateds.ToArray();
+                hooks.OnSpanActivated = (span, operationName) =>
+                {
+                    foreach (var d in delegates)
+                        d(span, operationName);
+                };
+            }
+
+            if (_onSpanFinisheds.Count != 0)
+            {
+                var delegates = _onSpanFinisheds.ToArray();
+                hooks.OnSpanFinished = (span, operationName) =>
+                {
+                    foreach (var d in delegates)
+                        d(span, operationName);
+                };
+            }
+
+            return new TracerDecorator(_tracer, hooks);
         }
+
+      
     }
 }

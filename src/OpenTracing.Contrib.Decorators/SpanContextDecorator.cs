@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OpenTracing.Contrib.Decorators
 {
-    public class SpanContextDecorator : ISpanContext
+    class SpanContextDecorator : ISpanContext
     {
         private readonly ISpanContext _spanContext;
 
@@ -12,6 +12,7 @@ namespace OpenTracing.Contrib.Decorators
         {
             _spanContext = spanContext;
         }
+
         public virtual string TraceId => _spanContext.TraceId;
 
         public virtual string SpanId => _spanContext.SpanId;

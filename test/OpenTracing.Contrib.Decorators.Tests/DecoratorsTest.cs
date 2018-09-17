@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using OpenTracing.Contrib.Decorators;
 using OpenTracing.Mock;
 using OpenTracing.Noop;
+using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -14,110 +15,37 @@ namespace OpenTracing.Contrib.Decorators.Tests
     {
         private readonly ITracer _tracer = new MockTracer();
         private readonly ITestOutputHelper _output;
+        private readonly List<string> _outputs = new List<string>();
 
         public DecoratorsTest(ITestOutputHelper output)
         {
             _output = output;
         }
 
-        class TestOutputTracerDecorator : TracerDecorator
+        void WriteLine(string line)
         {
-            private readonly ITestOutputHelper _output;
-
-            public TestOutputTracerDecorator(ITracer tracer, ITestOutputHelper output) : base(tracer)
-            {
-                _output = output;
-            }
-
-            public override ISpanBuilder BuildSpan(string operationName)
-            {
-                _output.WriteLine($"Building span named {operationName}");
-                return base.BuildSpan(operationName);
-            }
-        }
-
-        class TestOutputSpanBuilderDecorator : SpanBuilderDecorator
-        {
-            private readonly ITestOutputHelper _output;
-
-            public TestOutputSpanBuilderDecorator(ISpanBuilder spanBuilder, ITestOutputHelper output) : base(spanBuilder)
-            {
-                _output = output;
-            }
-
-            public override ISpan Start()
-            {
-                var span = base.Start();
-                _output.WriteLine($"Span Started: {span}");
-                return span;
-            }
-
-            public override IScope StartActive()
-            {
-                var scope = base.StartActive();
-                _output.WriteLine($"Scope Started: {scope.Span}");
-                return scope;
-            }
-
-            public override IScope StartActive(bool finishSpanOnDispose)
-            {
-                var scope = base.StartActive(finishSpanOnDispose);
-                _output.WriteLine($"Scope Started: {scope.Span}");
-                return scope;
-            }
-        }
-
-        class TestOutputScopeDecorator : ScopeDecorator
-        {
-            private readonly ITestOutputHelper _output;
-
-            public TestOutputScopeDecorator(IScope scope, ITestOutputHelper output) : base(scope)
-            {
-                _output = output;
-            }
-
-            public override void Dispose()
-            {
-                base.Dispose();
-                _output.WriteLine($"Scope disposed: {Span}");
-            }
-        }
-
-        class TestOutputSpanDecorator : SpanDecorator
-        {
-            private readonly ITestOutputHelper _output;
-
-            public TestOutputSpanDecorator(ISpan span, ITestOutputHelper output) : base(span)
-            {
-                _output = output;
-            }
-
-            public override void Finish()
-            {
-                base.Finish();
-                _output.WriteLine($"Span Finished: {this}");
-            }
+            _output.WriteLine(line);
+            _outputs.Add(line);
         }
 
         [Fact]
         public async Task Test()
         {
             var builder = new TracerDecoratorBuilder(_tracer)
-                .WithTracerDecorator(tracer => new TestOutputTracerDecorator(tracer, _output))
-                .WithSpanBuilderDecorator(spanBuilder => new TestOutputSpanBuilderDecorator(spanBuilder, _output))
-                .WithScopeDecorator(scope => new TestOutputScopeDecorator(scope, _output))
-                .WithSpanDecorator(span => new TestOutputSpanDecorator(span, _output))
+                .OnSpanStarted((span, operationName) => WriteLine($"Span started: {operationName}"))
+                .OnSpanActivated((span, operationName) => WriteLine($"Span activated: {operationName}"))
+                .OnSpanFinished((span, operationName) => WriteLine($"Span finished: {operationName}"))
                 ;
 
             var sut = builder.Build();
 
-            using (var scope = sut.BuildSpan("StartActive(fasle)").StartActive(false))
+            using (var scope = sut.BuildSpan("main").StartActive(false))
             {
-                var span = sut.BuildSpan("Start()").Start();
+                var span = sut.BuildSpan("not_active").Start();
 
                 try
                 {
-                    _output.WriteLine("--> Doing something 1");
+                    WriteLine("--> Doing something 1");
                     await Task.Delay(10);
                 }
                 finally
@@ -125,15 +53,40 @@ namespace OpenTracing.Contrib.Decorators.Tests
                     span.Finish();
                 }
 
-                using (sut.BuildSpan("StartActive()").StartActive())
+                using (sut.BuildSpan("active_child").StartActive())
                 {
                     await Task.Delay(10);
-                    _output.WriteLine("--> Doing something 2");
+                    WriteLine("--> Doing something 2");
                 }
-
 
                 scope.Span.Finish();
             }
+
+            _outputs.Count.ShouldBe(10);
+
+            _outputs[0].ShouldBe("Span started: main");
+            _outputs[1].ShouldBe("Span activated: main");
+            _outputs[2].ShouldBe("Span started: not_active");
+            _outputs[3].ShouldBe(@"--> Doing something 1");
+            _outputs[4].ShouldBe("Span finished: not_active");
+            _outputs[5].ShouldBe("Span started: active_child");
+            _outputs[6].ShouldBe("Span activated: active_child");
+            _outputs[7].ShouldBe(@"--> Doing something 2");
+            _outputs[8].ShouldBe("Span finished: active_child");
+            _outputs[9].ShouldBe("Span finished: main");
+
+            /*
+                Span started: main
+                Span activated: main
+                Span started: not_active
+                --> Doing something 1
+                Span finished: not_active
+                Span started: active_child
+                Span activated: active_child
+                --> Doing something 2
+                Span finished: active_child
+                Span finished: main
+            */
         }
     }
 }
