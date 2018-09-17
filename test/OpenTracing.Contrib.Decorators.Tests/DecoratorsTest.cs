@@ -32,9 +32,9 @@ namespace OpenTracing.Contrib.Decorators.Tests
         public async Task Test()
         {
             var builder = new TracerDecoratorBuilder(_tracer)
-                .OnSpanStarted((span, operationName) => WriteLine($"Span started : {span}"))
-                .OnSpanActivated((span, operationName) => WriteLine($"Span activated : {span}"))
-                .OnSpanFinished((span, operationName) => WriteLine($"Span finished : {span}"))
+                .OnSpanStarted((span, operationName) => WriteLine($"Span started: {operationName}"))
+                .OnSpanActivated((span, operationName) => WriteLine($"Span activated: {operationName}"))
+                .OnSpanFinished((span, operationName) => WriteLine($"Span finished: {operationName}"))
                 ;
 
             var sut = builder.Build();
@@ -62,43 +62,30 @@ namespace OpenTracing.Contrib.Decorators.Tests
                 scope.Span.Finish();
             }
 
-            // IDs can changed from one to another execution, only testing start & end of the outputs
             _outputs.Count.ShouldBe(10);
 
-            _outputs[0].ShouldStartWith("Span started");
-            _outputs[0].ShouldEndWith("OperationName: main");
-            _outputs[1].ShouldStartWith("Span activated");
-            _outputs[1].ShouldEndWith("OperationName: main");
-            _outputs[2].ShouldStartWith("Span started");
-            _outputs[2].ShouldEndWith("OperationName: not_active");
-
+            _outputs[0].ShouldBe("Span started: main");
+            _outputs[1].ShouldBe("Span activated: main");
+            _outputs[2].ShouldBe("Span started: not_active");
             _outputs[3].ShouldBe(@"--> Doing something 1");
-
-            _outputs[4].ShouldStartWith("Span finished");
-            _outputs[4].ShouldEndWith("OperationName: not_active");
-            _outputs[5].ShouldStartWith("Span started");
-            _outputs[5].ShouldEndWith("OperationName: active_child");
-            _outputs[6].ShouldStartWith("Span activated");
-            _outputs[6].ShouldEndWith("OperationName: active_child");
-
+            _outputs[4].ShouldBe("Span finished: not_active");
+            _outputs[5].ShouldBe("Span started: active_child");
+            _outputs[6].ShouldBe("Span activated: active_child");
             _outputs[7].ShouldBe(@"--> Doing something 2");
-
-            _outputs[8].ShouldStartWith("Span finished");
-            _outputs[8].ShouldEndWith("OperationName: active_child");
-            _outputs[9].ShouldStartWith("Span finished");
-            _outputs[9].ShouldEndWith("OperationName: main");
+            _outputs[8].ShouldBe("Span finished: active_child");
+            _outputs[9].ShouldBe("Span finished: main");
 
             /*
-                Span started : TraceId: 1, SpanId: 2, ParentId: , OperationName: main
-                Span activated : TraceId: 1, SpanId: 2, ParentId: , OperationName: main
-                Span started : TraceId: 1, SpanId: 3, ParentId: 2, OperationName: not_active
+                Span started: main
+                Span activated: main
+                Span started: not_active
                 --> Doing something 1
-                Span finished : TraceId: 1, SpanId: 3, ParentId: 2, OperationName: not_active
-                Span started : TraceId: 1, SpanId: 4, ParentId: 2, OperationName: active_child
-                Span activated : TraceId: 1, SpanId: 4, ParentId: 2, OperationName: active_child
+                Span finished: not_active
+                Span started: active_child
+                Span activated: active_child
                 --> Doing something 2
-                Span finished : TraceId: 1, SpanId: 4, ParentId: 2, OperationName: active_child
-                Span finished : TraceId: 1, SpanId: 2, ParentId: , OperationName: main
+                Span finished: active_child
+                Span finished: main
             */
         }
     }

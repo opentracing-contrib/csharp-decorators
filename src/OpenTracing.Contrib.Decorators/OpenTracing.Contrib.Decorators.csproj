@@ -5,6 +5,7 @@
     <IsPackable>true</IsPackable>
     <Description></Description>
     <PackageTags>opentracing;distributed-tracing;tracing;logging</PackageTags>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

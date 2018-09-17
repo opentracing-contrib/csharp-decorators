@@ -20,7 +20,7 @@ In order to decorate some behavior to an existing ITracer implementation, you'll
 using OpenTracing.Contrib.Decorators;
 ```
 
-Build some decorators around your existing tracer
+Build some additional behavior using method hooks
 ```csharp
 // TODO
 ```

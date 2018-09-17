@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using OpenTracing.Tag;
 
@@ -35,13 +36,33 @@ namespace OpenTracing.Contrib.Decorators
         }
         public virtual string GetBaggageItem(string key) => _span.GetBaggageItem(key);
 
-        public virtual ISpan Log(IEnumerable<KeyValuePair<string, object>> fields) { _span.Log(fields); return this; }
+        public virtual ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+        {
+            _span.Log(fields);
+            _hooks.OnSpanLog(_span, _operationName, DateTimeOffset.Now, fields.Select(f => new LogKeyValue { key = f.Key, value = f.Value }).ToArray());
+            return this;
+        }
 
-        public virtual ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields) { _span.Log(timestamp, fields); return this; }
+        public virtual ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+        {
+            _span.Log(timestamp, fields);
+            _hooks.OnSpanLog(_span, _operationName, timestamp, fields.Select(f => new LogKeyValue { key = f.Key, value = f.Value }).ToArray());
+            return this;
+        }
 
-        public virtual ISpan Log(string @event) { _span.Log(@event); return this; }
+        public virtual ISpan Log(string @event)
+        {
+            _span.Log(@event);
+            _hooks.OnSpanLog(_span, _operationName, DateTimeOffset.Now, new[] { new LogKeyValue { key = nameof(@event), value = @event } });
+            return this;
+        }
 
-        public virtual ISpan Log(DateTimeOffset timestamp, string @event) { _span.Log(timestamp, @event); return this; }
+        public virtual ISpan Log(DateTimeOffset timestamp, string @event)
+        {
+            _span.Log(timestamp, @event);
+            _hooks.OnSpanLog(_span, _operationName, timestamp, new[] { new LogKeyValue { key = nameof(@event), value = @event } });
+            return this;
+        }
 
         public virtual ISpan SetBaggageItem(string key, string value) { _span.SetBaggageItem(key, value); return this; }
 
