@@ -22,7 +22,7 @@ namespace OpenTracing.Contrib.Decorators.Tests
             _output = output;
         }
 
-        void WriteLine(string line)
+        void WriteLine(string line) 
         {
             _output.WriteLine(line);
             _outputs.Add(line);
@@ -37,11 +37,11 @@ namespace OpenTracing.Contrib.Decorators.Tests
                 .OnSpanFinished((span, operationName) => WriteLine($"Span finished: {operationName}"))
                 ;
 
-            var sut = builder.Build();
+            var decoratedTracer = builder.Build();
 
-            using (var scope = sut.BuildSpan("main").StartActive(false))
+            using (var scope = decoratedTracer.BuildSpan("main").StartActive(false))
             {
-                var span = sut.BuildSpan("not_active").Start();
+                var span = decoratedTracer.BuildSpan("not_active").Start();
 
                 try
                 {
@@ -53,7 +53,7 @@ namespace OpenTracing.Contrib.Decorators.Tests
                     span.Finish();
                 }
 
-                using (sut.BuildSpan("active_child").StartActive())
+                using (decoratedTracer.BuildSpan("active_child").StartActive())
                 {
                     await Task.Delay(10);
                     WriteLine("--> Doing something 2");
