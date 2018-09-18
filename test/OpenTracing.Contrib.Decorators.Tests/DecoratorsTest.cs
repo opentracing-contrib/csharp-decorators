@@ -22,7 +22,7 @@ namespace OpenTracing.Contrib.Decorators.Tests
             _output = output;
         }
 
-        void WriteLine(string line) 
+        void WriteLine(string line)
         {
             _output.WriteLine(line);
             _outputs.Add(line);
