@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace OpenTracing.Contrib.Decorators
@@ -13,9 +14,16 @@ namespace OpenTracing.Contrib.Decorators
         }
 
         readonly List<OnSpanStarted> _onSpanStarteds = new List<OnSpanStarted>();
-        public TracerDecoratorBuilder OnSpanStarted(OnSpanStarted onSpanActivated)
+        public TracerDecoratorBuilder OnSpanStarted(OnSpanStarted onSpanStarted)
         {
-            _onSpanStarteds.Add(onSpanActivated);
+            _onSpanStarteds.Add(onSpanStarted);
+            return this;
+        }
+
+        readonly List<OnSpanStartedWithFinishCallback> _onSpanStartedWithCallbacks = new List<OnSpanStartedWithFinishCallback>();
+        public TracerDecoratorBuilder OnSpanStartedWithCallback(OnSpanStartedWithFinishCallback onSpanStartedWithFinishCallback)
+        {
+            _onSpanStartedWithCallbacks.Add(onSpanStartedWithFinishCallback);
             return this;
         }
 
@@ -35,7 +43,7 @@ namespace OpenTracing.Contrib.Decorators
 
         public ITracer Build()
         {
-            var hooks = new DecoratorHooks();
+            var hooks = new BuildersDecoratorHooks();
 
             if (_onSpanStarteds.Count != 0)
             {
@@ -67,9 +75,25 @@ namespace OpenTracing.Contrib.Decorators
                 };
             }
 
+            if (_onSpanStartedWithCallbacks.Count != 0)
+            {
+                var delegates = _onSpanStartedWithCallbacks.ToArray();
+                hooks.OnSpanStartedWithFinishCallback = (span, operationName) =>
+                {
+                    var callBacks = delegates.Select(d => d(span, operationName)).ToArray();
+                    return (sp, op) =>
+                    {
+                        foreach (var callBack in callBacks)
+                        {
+                            callBack(sp, op);
+                        }
+                    };
+                };
+            }
+
             return new TracerDecorator(_tracer, hooks);
         }
 
-      
+
     }
 }

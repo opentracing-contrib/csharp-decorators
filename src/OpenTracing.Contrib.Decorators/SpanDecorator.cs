@@ -11,9 +11,9 @@ namespace OpenTracing.Contrib.Decorators
         private readonly ISpan _span;
         private readonly ITracer _tracer;
         internal string _operationName;
-        private readonly DecoratorHooks _hooks;
+        private readonly SpanDecoratorHooks _hooks;
 
-        public SpanDecorator(ISpan span, ITracer tracer, string operationName, DecoratorHooks hooks)
+        public SpanDecorator(ISpan span, ITracer tracer, string operationName, SpanDecoratorHooks hooks)
         {
             _span = span;
             _tracer = tracer;

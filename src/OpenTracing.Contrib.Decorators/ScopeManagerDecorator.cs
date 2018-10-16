@@ -7,10 +7,10 @@ namespace OpenTracing.Contrib.Decorators
     class ScopeManagerDecorator : IScopeManager
     {
         private readonly ITracer _tracer;
-        private readonly DecoratorHooks _hooks;
+        private readonly BuildersDecoratorHooks _hooks;
         private readonly IScopeManager _scopeManager;
 
-        public ScopeManagerDecorator(IScopeManager scopeManager, ITracer tracer, DecoratorHooks hooks)
+        public ScopeManagerDecorator(IScopeManager scopeManager, ITracer tracer, BuildersDecoratorHooks hooks)
         {
             _scopeManager = scopeManager;
             _tracer = tracer;
