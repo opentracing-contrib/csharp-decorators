@@ -8,9 +8,9 @@ namespace OpenTracing.Contrib.Decorators
     class TracerDecorator : ITracer
     {
         private readonly ITracer _tracer;
-        private readonly DecoratorHooks _hooks;
+        private readonly BuildersDecoratorHooks _hooks;
 
-        public TracerDecorator(ITracer tracer, DecoratorHooks hooks)
+        public TracerDecorator(ITracer tracer, BuildersDecoratorHooks hooks)
         {
             _tracer = tracer;
             _hooks = hooks;

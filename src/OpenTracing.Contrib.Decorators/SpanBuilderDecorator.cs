@@ -10,9 +10,9 @@ namespace OpenTracing.Contrib.Decorators
         private readonly ISpanBuilder _spanBuilder;
         private readonly ITracer _tracer;
         private readonly string _operationName;
-        private readonly DecoratorHooks _hooks;
+        private readonly BuildersDecoratorHooks _hooks;
 
-        public SpanBuilderDecorator(ISpanBuilder spanBuilder, ITracer tracer, string operationName, DecoratorHooks hooks)
+        public SpanBuilderDecorator(ISpanBuilder spanBuilder, ITracer tracer, string operationName, BuildersDecoratorHooks hooks)
         {
             _spanBuilder = spanBuilder;
             _tracer = tracer;
@@ -32,8 +32,12 @@ namespace OpenTracing.Contrib.Decorators
         public virtual ISpan Start()
         {
             var span = _spanBuilder.Start();
+
             _hooks.OnSpanStarted(span, _operationName);
-            return new SpanDecorator(span, _tracer, _operationName, _hooks);
+            var callback = _hooks.OnSpanStartedWithFinishCallback(span, _operationName);
+            var spanHooks = new SpanDecoratorHooks(_hooks, callback);
+
+            return new SpanDecorator(span, _tracer, _operationName, spanHooks);
         }
 
         public virtual IScope StartActive() => StartActive(true);

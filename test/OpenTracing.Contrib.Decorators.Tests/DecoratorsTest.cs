@@ -88,5 +88,43 @@ namespace OpenTracing.Contrib.Decorators.Tests
                 Span finished: main
             */
         }
+
+        [Fact]
+        public async Task StartedWithCallbackDecorator()
+        {
+            var builder = new TracerDecoratorBuilder(_tracer)
+             .OnSpanStartedWithCallback(
+                (span, operationName) =>
+                {
+                    WriteLine($"Span started: {operationName}");
+                    return (sp, op) => { WriteLine($"Span finished: {operationName}"); };
+                })
+                ;
+
+            var decoratedTracer = builder.Build();
+
+            using (var scope = decoratedTracer.BuildSpan("main").StartActive(false))
+            {
+                var span = decoratedTracer.BuildSpan("not_active").Start();
+
+                try
+                {
+                    WriteLine("--> Doing something 1");
+                    await Task.Delay(10);
+                }
+                finally
+                {
+                    span.Finish();
+                }
+
+                using (decoratedTracer.BuildSpan("active_child").StartActive())
+                {
+                    await Task.Delay(10);
+                    WriteLine("--> Doing something 2");
+                }
+
+                scope.Span.Finish();
+            }
+        }
     }
 }
