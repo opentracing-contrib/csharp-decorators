@@ -35,9 +35,23 @@ namespace OpenTracing.Contrib.Decorators
         }
 
         readonly List<OnSpanFinished> _onSpanFinisheds = new List<OnSpanFinished>();
-        public TracerDecoratorBuilder OnSpanFinished(OnSpanFinished onSpanFinisheds)
+        public TracerDecoratorBuilder OnSpanFinished(OnSpanFinished onSpanFinished)
         {
-            _onSpanFinisheds.Add(onSpanFinisheds);
+            _onSpanFinisheds.Add(onSpanFinished);
+            return this;
+        }
+
+        readonly List<OnSpanLog> _onSpanLogs = new List<OnSpanLog>();
+        public TracerDecoratorBuilder OnSpanLog(OnSpanLog onSpanLog)
+        {
+            _onSpanLogs.Add(onSpanLog);
+            return this;
+        }
+
+        readonly List<OnSpanSetTag> _onSpanSetTags = new List<OnSpanSetTag>();
+        public TracerDecoratorBuilder OnSpanSetTag(OnSpanSetTag onSpanSetTag)
+        {
+            _onSpanSetTags.Add(onSpanSetTag);
             return this;
         }
 
@@ -88,6 +102,26 @@ namespace OpenTracing.Contrib.Decorators
                             callBack(sp, op);
                         }
                     };
+                };
+            }
+
+            if (_onSpanLogs.Count != 0)
+            {
+                var delegates = _onSpanLogs.ToArray();
+                hooks.OnSpanLog = (span, operationName, timestamp, fields) =>
+                {
+                    foreach (var d in delegates)
+                        d(span, operationName, timestamp, fields);
+                };
+            }
+
+            if (_onSpanSetTags.Count != 0)
+            {
+                var delegates = _onSpanSetTags.ToArray();
+                hooks.OnSpanSetTag = (span, operationName, tagKeyValue) =>
+                {
+                    foreach (var d in delegates)
+                        d(span, operationName, tagKeyValue);
                 };
             }
 

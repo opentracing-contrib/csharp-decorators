@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTracing.Contrib.Decorators;
@@ -29,23 +30,38 @@ namespace OpenTracing.Contrib.Decorators.Tests
         }
 
         [Fact]
-        public async Task Test()
+        public async Task WriteSomeSpanStory()
         {
             var builder = new TracerDecoratorBuilder(_tracer)
-                .OnSpanStarted((span, operationName) => WriteLine($"Span started: {operationName}"))
-                .OnSpanActivated((span, operationName) => WriteLine($"Span activated: {operationName}"))
-                .OnSpanFinished((span, operationName) => WriteLine($"Span finished: {operationName}"))
-                ;
+                .OnSpanStarted((span, operationName) => WriteLine($"Started: {operationName}"))
+                .OnSpanActivated((span, operationName) => WriteLine($"Activated: {operationName}"))
+                .OnSpanFinished((span, operationName) => WriteLine($"Finished: {operationName}"))
+                .OnSpanLog((span, operationName, timestamp, fields) =>
+                {
+                    WriteLine($"Log: {operationName} : {string.Join(", ", fields.Select(f => $"{f.key}/{f.value}"))}");
+                })
+                .OnSpanSetTag((span, operationName, tag) =>
+                {
+                    WriteLine($"Tag: {operationName} : {tag.key}/{tag.value}");
+                });
+            ;
 
             var decoratedTracer = builder.Build();
 
-            using (var scope = decoratedTracer.BuildSpan("main").StartActive(false))
+            using (var scope = decoratedTracer
+                .BuildSpan("main")
+                .WithTag("tag1", 1)
+                .StartActive(false)
+                )
             {
+                scope.Span.SetTag("tag2", 2);
+
                 var span = decoratedTracer.BuildSpan("not_active").Start();
 
                 try
                 {
                     WriteLine("--> Doing something 1");
+                    span.SetTag("tag3", true);
                     await Task.Delay(10);
                 }
                 finally
@@ -55,6 +71,7 @@ namespace OpenTracing.Contrib.Decorators.Tests
 
                 using (decoratedTracer.BuildSpan("active_child").StartActive())
                 {
+                    decoratedTracer.ActiveSpan.Log(new Dictionary<string, object> { { "log1", 42 }, { "log2", "test" } });
                     await Task.Delay(10);
                     WriteLine("--> Doing something 2");
                 }
@@ -62,31 +79,29 @@ namespace OpenTracing.Contrib.Decorators.Tests
                 scope.Span.Finish();
             }
 
-            _outputs.Count.ShouldBe(10);
+            var lines = new[]
+            {
+                "Started: main",
+                "Tag: main : tag1/1",
+                "Activated: main",
+                "Tag: main : tag2/2",
+                "Started: not_active",
+                @"--> Doing something 1",
+                "Tag: not_active : tag3/True",
+                "Finished: not_active",
+                "Started: active_child",
+                "Activated: active_child",
+                "Log: active_child : log1/42, log2/test",
+                @"--> Doing something 2",
+                "Finished: active_child",
+                "Finished: main",
+            };
 
-            _outputs[0].ShouldBe("Span started: main");
-            _outputs[1].ShouldBe("Span activated: main");
-            _outputs[2].ShouldBe("Span started: not_active");
-            _outputs[3].ShouldBe(@"--> Doing something 1");
-            _outputs[4].ShouldBe("Span finished: not_active");
-            _outputs[5].ShouldBe("Span started: active_child");
-            _outputs[6].ShouldBe("Span activated: active_child");
-            _outputs[7].ShouldBe(@"--> Doing something 2");
-            _outputs[8].ShouldBe("Span finished: active_child");
-            _outputs[9].ShouldBe("Span finished: main");
-
-            /*
-                Span started: main
-                Span activated: main
-                Span started: not_active
-                --> Doing something 1
-                Span finished: not_active
-                Span started: active_child
-                Span activated: active_child
-                --> Doing something 2
-                Span finished: active_child
-                Span finished: main
-            */
+            _outputs.Count.ShouldBe(lines.Length);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                _outputs[i].ShouldBe(lines[i]);
+            }
         }
 
         [Fact]
