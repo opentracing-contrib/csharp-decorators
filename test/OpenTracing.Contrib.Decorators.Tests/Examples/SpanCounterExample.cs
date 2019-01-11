@@ -11,57 +11,107 @@ namespace OpenTracing.Contrib.Decorators.Tests
 {
     public class ActiveSpansCounterExample
     {
-        [Fact]
-        public void Test()
+        int startedSpanCount = 0;
+
+
+        ITracer GetDecoratedTracer(string flavor)
         {
             var originalTracer = new MockTracer();
+            var builder = new TracerDecoratorBuilder(originalTracer);
 
-            var activeSpanCount = 0;
-
-            var builder = new TracerDecoratorBuilder(originalTracer)
-                .OnSpanActivated((span, name) => Interlocked.Increment(ref activeSpanCount))
-                .OnSpanFinished((span, name) => Interlocked.Decrement(ref activeSpanCount))
-                ;
-
-            var tracer = builder.Build();
-
-            activeSpanCount.ShouldBe(0);
-            using (tracer.BuildSpan("test").StartActive())
+            switch (flavor)
             {
-                activeSpanCount.ShouldBe(1);
+                case "StartedtAndFinished":
+                    builder
+                        .OnSpanStarted((span, name) => Interlocked.Increment(ref startedSpanCount))
+                        .OnSpanFinished((span, name) => Interlocked.Decrement(ref startedSpanCount))
+                        ;
+                    break;
+
+                case "StartedWithCallback":
+                    builder
+                        .OnSpanStartedWithCallback((span, name) =>
+                        {
+                            Interlocked.Increment(ref startedSpanCount);
+                            return (s, n) => Interlocked.Decrement(ref startedSpanCount);
+                        })
+                        ;
+                    break;
+
+                case "Both":
+                    builder
+                        .OnSpanStarted((span, name) => Interlocked.Increment(ref startedSpanCount))
+                        .OnSpanFinished((span, name) => Interlocked.Decrement(ref startedSpanCount))
+                        .OnSpanStartedWithCallback((span, name) =>
+                        {
+                            Interlocked.Increment(ref startedSpanCount);
+                            return (s, n) => Interlocked.Decrement(ref startedSpanCount);
+                        })
+                        ;
+                    break;
+                case "Five!!":
+                    for (int i = 0; i < 5; i++)
+                    {
+                        builder
+                            .OnSpanStarted((span, name) => Interlocked.Increment(ref startedSpanCount))
+                            .OnSpanFinished((span, name) => Interlocked.Decrement(ref startedSpanCount))
+                            ;
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(flavor), flavor, "Unknown");
             }
 
-            activeSpanCount.ShouldBe(0);
+            return builder.Build();
+        }
+
+
+        [Theory]
+        [InlineData("StartedtAndFinished", 1)]
+        [InlineData("StartedWithCallback", 1)]
+        [InlineData("Both", 2)]
+        [InlineData("Five!!", 5)]
+        public void Test(string flavor, int multiplier)
+        {
+            var tracer = GetDecoratedTracer(flavor);
+
+            startedSpanCount.ShouldBe(0);
+            using (tracer.BuildSpan("test").StartActive())
+            {
+                startedSpanCount.ShouldBe(1 * multiplier);
+            }
+
+            startedSpanCount.ShouldBe(0);
             {
                 var span = tracer.BuildSpan("test").Start();
-                activeSpanCount.ShouldBe(0);
+                startedSpanCount.ShouldBe(1 * multiplier);
                 tracer.ScopeManager.Activate(span, finishSpanOnDispose: false).Dispose();
-                activeSpanCount.ShouldBe(1);
+                startedSpanCount.ShouldBe(1 * multiplier);
                 span.Finish();
             }
 
-            activeSpanCount.ShouldBe(0);
+            startedSpanCount.ShouldBe(0);
             {
                 var scope = tracer.BuildSpan("test").StartActive(finishSpanOnDispose: false);
                 var span = scope.Span;
                 scope.Dispose();
-                activeSpanCount.ShouldBe(1);
+                startedSpanCount.ShouldBe(1 * multiplier);
                 span.Finish(DateTimeOffset.Now);
             }
 
-            activeSpanCount.ShouldBe(0);
+            startedSpanCount.ShouldBe(0);
             {
                 ISpan span = null;
                 using (var scope = tracer.BuildSpan("test").StartActive(finishSpanOnDispose: false))
                 {
-                    activeSpanCount.ShouldBe(1);
+                    startedSpanCount.ShouldBe(1 * multiplier);
                     span = scope.Span;
                 }
-                activeSpanCount.ShouldBe(1);
+                startedSpanCount.ShouldBe(1 * multiplier);
                 span.Finish();
             }
 
-            activeSpanCount.ShouldBe(0);
+            startedSpanCount.ShouldBe(0);
         }
     }
 }

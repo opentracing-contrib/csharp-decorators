@@ -73,21 +73,61 @@ namespace OpenTracing.Contrib.Decorators
             return this;
         }
 
-        public virtual ISpan SetTag(string key, string value) { _span.SetTag(key, value); return this; }
+        public virtual ISpan SetTag(string key, string value)
+        {
+            _span.SetTag(key, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(string key, bool value) { _span.SetTag(key, value); return this; }
+        public virtual ISpan SetTag(string key, bool value)
+        {
+            _span.SetTag(key, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(string key, int value) { _span.SetTag(key, value); return this; }
+        public virtual ISpan SetTag(string key, int value)
+        {
+            _span.SetTag(key, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(string key, double value) { _span.SetTag(key, value); return this; }
+        public virtual ISpan SetTag(string key, double value)
+        {
+            _span.SetTag(key, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(BooleanTag tag, bool value) { _span.SetTag(tag, value); return this; }
+        public virtual ISpan SetTag(BooleanTag tag, bool value)
+        {
+            _span.SetTag(tag, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = tag.Key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(IntOrStringTag tag, string value) { _span.SetTag(tag, value); return this; }
+        public virtual ISpan SetTag(IntOrStringTag tag, string value)
+        {
+            _span.SetTag(tag, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = tag.Key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(IntTag tag, int value) { _span.SetTag(tag, value); return this; }
+        public virtual ISpan SetTag(IntTag tag, int value)
+        {
+            _span.SetTag(tag, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = tag.Key, value = value });
+            return this;
+        }
 
-        public virtual ISpan SetTag(StringTag tag, string value) { _span.SetTag(tag, value); return this; }
+        public virtual ISpan SetTag(StringTag tag, string value)
+        {
+            _span.SetTag(tag, value);
+            _hooks.OnSpanSetTag(_span, _operationName, new TagKeyValue { key = tag.Key, value = value });
+            return this;
+        }
 
         public override string ToString() => _span.ToString();
     }

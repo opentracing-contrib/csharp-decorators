@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28407.52
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTracing.Contrib.Decorators", "src\OpenTracing.Contrib.Decorators\OpenTracing.Contrib.Decorators.csproj", "{D97BEDD1-D085-486C-8AD5-ACB961E787DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTracing.Contrib.Decorators.Tests", "test\OpenTracing.Contrib.Decorators.Tests\OpenTracing.Contrib.Decorators.Tests.csproj", "{62025AF5-75E0-479A-B045-8A1D97B44DA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTracing.Contrib.Decorators.Tests", "test\OpenTracing.Contrib.Decorators.Tests\OpenTracing.Contrib.Decorators.Tests.csproj", "{62025AF5-75E0-479A-B045-8A1D97B44DA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

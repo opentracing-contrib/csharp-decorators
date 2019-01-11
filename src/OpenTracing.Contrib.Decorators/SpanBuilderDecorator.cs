@@ -37,7 +37,9 @@ namespace OpenTracing.Contrib.Decorators
             var callback = _hooks.OnSpanStartedWithFinishCallback(span, _operationName);
             var spanHooks = new SpanDecoratorHooks(_hooks, callback);
 
-            return new SpanDecorator(span, _tracer, _operationName, spanHooks);
+            var decorator = new SpanDecorator(span, _tracer, _operationName, spanHooks);
+            ApplyPostponedTags(decorator);
+            return decorator;
         }
 
         public virtual IScope StartActive() => StartActive(true);
@@ -48,23 +50,34 @@ namespace OpenTracing.Contrib.Decorators
             return _tracer.ScopeManager.Activate(span, finishSpanOnDispose);
         }
 
-
         public virtual ISpanBuilder WithStartTimestamp(DateTimeOffset timestamp) { _spanBuilder.WithStartTimestamp(timestamp); return this; }
 
-        public virtual ISpanBuilder WithTag(string key, string value) { _spanBuilder.WithTag(key, value); return this; }
 
-        public virtual ISpanBuilder WithTag(string key, bool value) { _spanBuilder.WithTag(key, value); return this; }
+        // In the next methods, I need to postpone the tag application, in order to able to call hooks,
+        // otherwise the span is created with no chance to catch the tags.
 
-        public virtual ISpanBuilder WithTag(string key, int value) { _spanBuilder.WithTag(key, value); return this; }
+        List<Action<ISpan>> _tagsApplies = new List<Action<ISpan>>();
 
-        public virtual ISpanBuilder WithTag(string key, double value) { _spanBuilder.WithTag(key, value); return this; }
+        private void ApplyPostponedTags(ISpan span)
+        {
+            foreach (var action in _tagsApplies)
+                action(span);
+        }
 
-        public virtual ISpanBuilder WithTag(BooleanTag tag, bool value) { _spanBuilder.WithTag(tag, value); return this; }
+        public virtual ISpanBuilder WithTag(string key, string value) { _tagsApplies.Add(s => s.SetTag(key, value)); return this; }
 
-        public virtual ISpanBuilder WithTag(IntOrStringTag tag, string value) { _spanBuilder.WithTag(tag, value); return this; }
+        public virtual ISpanBuilder WithTag(string key, bool value) { _tagsApplies.Add(s => s.SetTag(key, value)); return this; }
 
-        public virtual ISpanBuilder WithTag(IntTag tag, int value) { _spanBuilder.WithTag(tag, value); return this; }
+        public virtual ISpanBuilder WithTag(string key, int value) { _tagsApplies.Add(s => s.SetTag(key, value)); return this; }
 
-        public virtual ISpanBuilder WithTag(StringTag tag, string value) { _spanBuilder.WithTag(tag, value); return this; }
+        public virtual ISpanBuilder WithTag(string key, double value) { _tagsApplies.Add(s => s.SetTag(key, value)); return this; }
+
+        public virtual ISpanBuilder WithTag(BooleanTag tag, bool value) { _tagsApplies.Add(s => s.SetTag(tag, value)); return this; }
+
+        public virtual ISpanBuilder WithTag(IntOrStringTag tag, string value) { _tagsApplies.Add(s => s.SetTag(tag, value)); return this; }
+
+        public virtual ISpanBuilder WithTag(IntTag tag, int value) { _tagsApplies.Add(s => s.SetTag(tag, value)); return this; }
+
+        public virtual ISpanBuilder WithTag(StringTag tag, string value) { _tagsApplies.Add(s => s.SetTag(tag, value)); return this; }
     }
 }

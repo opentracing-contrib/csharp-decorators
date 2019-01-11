@@ -14,6 +14,8 @@ namespace OpenTracing.Contrib.Decorators
     public struct LogKeyValue { public string key; public object value; }
     public delegate void OnSpanLog(ISpan span, string operationName, DateTimeOffset timestamp, LogKeyValue[] fields);
 
+    public struct TagKeyValue { public string key; public object value; }
+    public delegate void OnSpanSetTag(ISpan span, string operationName, TagKeyValue value);
 
     class BuildersDecoratorHooks
     {
@@ -24,6 +26,8 @@ namespace OpenTracing.Contrib.Decorators
         public OnSpanFinished OnSpanFinished { get; set; } = (span, operationName) => { };
 
         public OnSpanLog OnSpanLog { get; set; } = (span, operationName, timestamp, fields) => { };
+
+        public OnSpanSetTag OnSpanSetTag { get; set; } = (span, operationName, tag) => { };
     }
 
     class SpanDecoratorHooks
@@ -32,8 +36,9 @@ namespace OpenTracing.Contrib.Decorators
         {
             OnSpanStarted = mainHooks.OnSpanStarted;
             OnSpanActivated = mainHooks.OnSpanActivated;
-            OnSpanFinished = (OnSpanFinished)OnSpanFinished.Combine(mainHooks.OnSpanFinished, callBack);
+            OnSpanFinished = (OnSpanFinished)Delegate.Combine(mainHooks.OnSpanFinished, callBack);
             OnSpanLog = mainHooks.OnSpanLog;
+            OnSpanSetTag = mainHooks.OnSpanSetTag;
         }
 
         public OnSpanStarted OnSpanStarted { get; }
@@ -41,5 +46,6 @@ namespace OpenTracing.Contrib.Decorators
         public OnSpanFinished OnSpanFinished { get; }
 
         public OnSpanLog OnSpanLog { get; }
+        public OnSpanSetTag OnSpanSetTag { get; }
     }
 }
