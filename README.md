@@ -1,5 +1,5 @@
 
-# OpenTrancing decorators
+# OpenTracing decorators
 Provide a way to plug extentions to opentracing instrumentation
 
 [![Build status](https://ci.appveyor.com/api/projects/status/d8oaqdspi9pw16b0/branch/master?svg=true)](https://ci.appveyor.com/project/JromeRx/csharp-decorators/branch/master)
